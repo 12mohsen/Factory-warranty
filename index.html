@@ -809,16 +809,28 @@
 
         <div class="floating-editor" id="floatingEditor">
             <div class="edit-form">
-                <input type="text" id="editSupplier" placeholder="اسم المورد">
-                <input type="number" id="editAmount" placeholder="المبلغ">
-                <input type="text" id="editItems" placeholder="التفاصيل (اختياري)">
-                <div style="display: flex; gap: 5px;">
-                    <input type="number" id="editWarrantyDuration" min="1" style="width: 70px;">
-                    <select id="editWarrantyUnit">
-                        <option value="years">سنة</option>
-                        <option value="months">شهر</option>
-                        <option value="days">يوم</option>
-                    </select>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span style="font-size: 12px; color: #ccc;">اسم المورد</span>
+                    <input type="text" id="editSupplier" placeholder="اسم المورد">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span style="font-size: 12px; color: #ccc;">المبلغ</span>
+                    <input type="number" id="editAmount" placeholder="المبلغ">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span style="font-size: 12px; color: #ccc;">تفاصيل المشتريات (اختياري)</span>
+                    <input type="text" id="editItems" placeholder="التفاصيل (اختياري)">
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <span style="font-size: 12px; color: #ccc;">مدة الضمان ووحدته</span>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" id="editWarrantyDuration" min="1" style="width: 70px;">
+                        <select id="editWarrantyUnit">
+                            <option value="years">سنة</option>
+                            <option value="months">شهر</option>
+                            <option value="days">يوم</option>
+                        </select>
+                    </div>
                 </div>
                 <button onclick="saveEdit()">حفظ</button>
                 <button onclick="cancelEdit()" class="hide-button">إلغاء</button>
@@ -1130,6 +1142,10 @@
 
                 const invoiceNumber = invoices.length - index;
 
+                const nearExpiryNotice = (!warrantyRemaining.expired && warrantyRemaining.remaining <= 30)
+                    ? '<p style="color:#FFA500;font-weight:bold;">تنبيه: الضمان أوشك على الانتهاء.</p>'
+                    : '';
+
                 invoiceElement.innerHTML = `
                     <div class="invoice-header">
                         <div style="display: flex; align-items: center;">
@@ -1155,6 +1171,7 @@
                         <p><strong>مدة الضمان:</strong> ${invoice.warrantyDuration} ${invoice.warrantyUnit === 'years' ? 'سنة' : (invoice.warrantyUnit === 'months' ? 'شهر' : 'يوم')}</p>
                         <p><strong>تاريخ انتهاء الضمان:</strong> ${invoice.warrantyDate}</p>
                         <p><strong>المتبقي من الضمان:</strong> ${warrantyRemaining.text}</p>
+                        ${nearExpiryNotice}
                         ${imagesHtml}
                     </div>
                 `;
@@ -1350,12 +1367,16 @@
                     
                     const warrantyRemaining = getRemainingWarranty(invoice.warrantyDate);
                     const statusClass = getWarrantyStatusClass(warrantyRemaining.remaining, invoice.warrantyDuration, invoice.warrantyUnit);
-                    
+
                     const warrantyStatus = warrantyRemaining.expired ? 
                         `<span class="warranty-expired">الضمان ${warrantyRemaining.text} ${warrantyRemaining.remaining} يوم</span>` : 
                         `<span class="warranty-remaining ${statusClass}">متبقي ${warrantyRemaining.text}</span>`;
 
                     const invoiceNumber = invoices.length - index;
+
+                    const nearExpiryNotice = (!warrantyRemaining.expired && warrantyRemaining.remaining <= 30)
+                        ? '<p style="color:#FFA500;font-weight:bold;">تنبيه: الضمان أوشك على الانتهاء.</p>'
+                        : '';
 
                     invoiceElement.innerHTML = `
                         <div class="invoice-header">
@@ -1382,6 +1403,7 @@
                             <p><strong>مدة الضمان:</strong> ${invoice.warrantyDuration} ${invoice.warrantyUnit === 'years' ? 'سنة' : (invoice.warrantyUnit === 'months' ? 'شهر' : 'يوم')}</p>
                             <p><strong>تاريخ انتهاء الضمان:</strong> ${invoice.warrantyDate}</p>
                             <p><strong>المتبقي من الضمان:</strong> ${warrantyRemaining.text}</p>
+                            ${nearExpiryNotice}
                             ${imagesHtml}
                         </div>
                     `;
