@@ -1,0 +1,1415 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام فواتير الشراء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            font-family: 'Tajawal', sans-serif;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin: 0;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container {
+            background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-container h2 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+            font-size: 1.8em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: 500;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #444;
+            background-color: #333;
+            color: white;
+            border-radius: 8px;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+        }
+
+        .warranty-group {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .warranty-input {
+            flex: 1;
+        }
+
+        .warranty-duration {
+            display: flex;
+            gap: 10px;
+        }
+
+        .warranty-duration input {
+            width: 100px;
+        }
+
+        .warranty-duration select {
+            width: 120px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .invoices-list {
+            background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .invoices-count {
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .invoices-wrapper {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .invoice-item {
+            background: rgba(51, 51, 51, 0.5);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border: 1px solid #444;
+            transition: transform 0.3s ease;
+        }
+
+        .invoice-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #444;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .hide-button {
+            background: linear-gradient(45deg, #666, #555);
+        }
+
+        .warranty-remaining {
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+
+        .warranty-remaining.high {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+        }
+
+        .warranty-remaining.medium {
+            background: linear-gradient(45deg, #FFA500, #FF8C00);
+            color: white;
+        }
+
+        .warranty-remaining.low {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            color: white;
+        }
+
+        .warranty-expired {
+            background: linear-gradient(45deg, #ff4444, #cc0000);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .total {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(76, 175, 80, 0.1);
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #4CAF50;
+            text-align: center;
+            border: 1px solid #4CAF50;
+        }
+
+        .image-preview {
+            max-width: 300px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .invoice-image {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 40px;
+            background: linear-gradient(135deg, #2d2d2d 0%, #383838 100%);
+            border-radius: 15px;
+            color: #888;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+
+        .owner-name {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .invoice-number {
+            background: linear-gradient(45deg, #333, #444);
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            margin-left: 10px;
+            border: 1px solid #555;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .invoice-item {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .warranty-group {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .button-group {
+                flex-wrap: wrap;
+            }
+
+            .container {
+                padding: 10px;
+            }
+        }
+
+        .scroll-buttons {
+            position: fixed;
+            left: 20px;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .scroll-button {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid rgba(76, 175, 80, 0.5);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .scroll-button:hover {
+            background: rgba(76, 175, 80, 0.4);
+            transform: scale(1.1);
+        }
+
+        .scroll-button svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        .floating-editor {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background: rgba(45, 45, 45, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .floating-editor.active {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .floating-editor .edit-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .floating-editor input,
+        .floating-editor select {
+            background: rgba(51, 51, 51, 0.9);
+            border: 1px solid rgba(76, 175, 80, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .floating-editor button {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .edit-button {
+            background: none;
+            border: none;
+            color: #4CAF50;
+            cursor: pointer;
+            padding: 5px;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .edit-button:hover {
+            transform: scale(1.1);
+            color: #45a049;
+        }
+
+        .edit-button svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .camera-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+        }
+
+        .camera-button svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        #cameraPreview {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .camera-container {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .capture-button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.9);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .capture-button::before {
+            content: '';
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .capture-button:hover::before {
+            width: 44px;
+            height: 44px;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .image-container {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            cursor: zoom-in;
+        }
+
+        .delete-image {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            backdrop-filter: blur(2px);
+        }
+
+        .delete-image:hover {
+            background: rgba(255, 0, 0, 0.9);
+        }
+
+        .add-image {
+            border: 2px dashed #4CAF50;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            aspect-ratio: 1;
+            background: rgba(76, 175, 80, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .add-image:hover {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .add-image svg {
+            width: 32px;
+            height: 32px;
+            fill: #4CAF50;
+            margin-bottom: 5px;
+        }
+
+        .lightbox {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .lightbox.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .lightbox.active .lightbox-content {
+            transform: scale(1);
+        }
+
+        .lightbox-image {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .lightbox-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 60px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .lightbox-nav:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .lightbox-prev {
+            left: 20px;
+            border-radius: 0 30px 30px 0;
+        }
+
+        .lightbox-next {
+            right: 20px;
+            border-radius: 30px 0 0 30px;
+        }
+
+        .lightbox-counter {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            backdrop-filter: blur(5px);
+        }
+
+        .search-container {
+            margin: 20px auto;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            direction: rtl;
+        }
+
+        .search-input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 16px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>نظام فواتير الشراء</h1>
+        </div>
+
+        <div class="form-container">
+            <h2>إضافة فاتورة جديدة</h2>
+            <form id="invoiceForm">
+                <div class="form-group">
+                    <label for="date">تاريخ الشراء:</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group warranty-group">
+                    <div class="warranty-input">
+                        <label>مدة الضمان:</label>
+                        <div class="warranty-duration">
+                            <input type="number" id="warrantyDuration" name="warrantyDuration" min="1" required>
+                            <select id="warrantyUnit" name="warrantyUnit">
+                                <option value="years">سنة</option>
+                                <option value="months">شهر</option>
+                                <option value="days">يوم</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="warranty-input">
+                        <label for="warrantyDate">تاريخ انتهاء الضمان:</label>
+                        <input type="date" id="warrantyDate">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="supplier">اسم المورد:</label>
+                    <input type="text" id="supplier" required>
+                </div>
+                <div class="form-group">
+                    <label for="items">تفاصيل المشتريات (اختياري):</label>
+                    <textarea id="items" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="amount">المبلغ الإجمالي:</label>
+                    <input type="number" id="amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>صور الفاتورة:</label>
+                    <div class="camera-controls">
+                        <input type="file" id="image" accept="image/*" multiple style="display: none;">
+                        <button type="button" class="camera-button" onclick="document.getElementById('image').click()">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3v2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"/>
+                            </svg>
+                            اختيار صور
+                        </button>
+                        <button type="button" class="camera-button" onclick="startCamera()">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M9 3L7.17 5H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2h-3.17L15 3H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                                <path d="M12 17c1.65 0 3-1.35 3-3s-1.35-3-3-3-3 1.35-3 3 1.35 3 3 3z"/>
+                            </svg>
+                            استخدام الكاميرا
+                        </button>
+                    </div>
+                    <div class="camera-container">
+                        <video id="cameraPreview" autoplay playsinline></video>
+                        <button type="button" class="capture-button" id="captureButton" style="display: none;" onclick="captureImage()"></button>
+                    </div>
+                    <div class="images-grid" id="imagesGrid">
+                        <div class="add-image" onclick="document.getElementById('image').click()">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                            </svg>
+                            <span>إضافة صور</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit">حفظ الفاتورة</button>
+            </form>
+        </div>
+
+        <div id="invoicesSection">
+            <h2>الفواتير المحفوظة</h2>
+            
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-input" placeholder="ابحث في الفواتير..." oninput="searchInvoices()">
+                <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
+            
+            <div id="noResults" class="no-results">
+                لا توجد نتائج للبحث
+            </div>
+
+            <div class="invoices-list">
+                <div class="invoices-count">
+                    عدد الفواتير: <span id="invoicesCount">0</span>
+                </div>
+                <div class="invoices-wrapper" id="invoicesWrapper">
+                    <div id="invoicesList"></div>
+                </div>
+                <div class="total">
+                    إجمالي المبالغ: <span id="totalAmount">0.00</span> ريال
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-buttons">
+            <button class="scroll-button" onclick="scrollToTop()" title="انتقل إلى الأعلى">
+                <svg viewBox="0 0 24 24">
+                    <path d="M16.59 15.41L12 10.83 7.41 15.41 6 14l6-6 6 6z"/>
+                </svg>
+                <span style="font-size: 14px; margin-top: 2px;">▲</span>
+            </button>
+            <button class="scroll-button" onclick="scrollToBottom()" title="انتقل إلى الأسفل">
+                <svg viewBox="0 0 24 24">
+                    <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+                </svg>
+                <span style="font-size: 14px; margin-top: 2px;">▼</span>
+            </button>
+        </div>
+
+        <div class="floating-editor" id="floatingEditor">
+            <div class="edit-form">
+                <input type="text" id="editSupplier" placeholder="اسم المورد">
+                <input type="number" id="editAmount" placeholder="المبلغ">
+                <input type="text" id="editItems" placeholder="التفاصيل (اختياري)">
+                <div style="display: flex; gap: 5px;">
+                    <input type="number" id="editWarrantyDuration" min="1" style="width: 70px;">
+                    <select id="editWarrantyUnit">
+                        <option value="years">سنة</option>
+                        <option value="months">شهر</option>
+                        <option value="days">يوم</option>
+                    </select>
+                </div>
+                <button onclick="saveEdit()">حفظ</button>
+                <button onclick="cancelEdit()" class="hide-button">إلغاء</button>
+            </div>
+        </div>
+
+        <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+            <div class="lightbox-content">
+                <img src="" alt="صورة مكبرة" class="lightbox-image" id="lightboxImage">
+                <button class="lightbox-close" onclick="closeLightbox(event)">&times;</button>
+                <button class="lightbox-nav lightbox-prev" onclick="navigateImage(-1, event)">&lsaquo;</button>
+                <button class="lightbox-nav lightbox-next" onclick="navigateImage(1, event)">&rsaquo;</button>
+                <div class="lightbox-counter" id="lightboxCounter"></div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>تم تطوير النظام بواسطة <span class="owner-name">عبدالمحسن</span></p>
+            <p>جميع الحقوق محفوظة 2025</p>
+        </div>
+    </div>
+
+    <script>
+        // Calculate warranty date based on purchase date and warranty duration
+        function calculateWarrantyDate() {
+            const purchaseDate = new Date(document.getElementById('date').value);
+            const duration = parseInt(document.getElementById('warrantyDuration').value);
+            const unit = document.getElementById('warrantyUnit').value;
+            
+            if (isNaN(duration) || !purchaseDate) return;
+            
+            const warrantyDate = new Date(purchaseDate);
+            if (unit === 'years') {
+                warrantyDate.setFullYear(warrantyDate.getFullYear() + duration);
+            } else if (unit === 'months') {
+                warrantyDate.setMonth(warrantyDate.getMonth() + duration);
+            } else if (unit === 'days') {
+                warrantyDate.setDate(warrantyDate.getDate() + duration);
+            }
+            
+            document.getElementById('warrantyDate').value = warrantyDate.toISOString().split('T')[0];
+        }
+
+        // Update warranty date when purchase date or warranty duration/unit changes
+        document.getElementById('date').addEventListener('change', calculateWarrantyDate);
+        document.getElementById('warrantyDuration').addEventListener('input', calculateWarrantyDate);
+        document.getElementById('warrantyUnit').addEventListener('change', calculateWarrantyDate);
+
+        // Update warranty duration when warranty date changes
+        document.getElementById('warrantyDate').addEventListener('change', function() {
+            const purchaseDate = new Date(document.getElementById('date').value);
+            const warrantyDate = new Date(this.value);
+            
+            if (purchaseDate && warrantyDate && !isNaN(purchaseDate) && !isNaN(warrantyDate)) {
+                const diffTime = warrantyDate - purchaseDate;
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+                if (diffDays > 0 && diffDays % 365 === 0) {
+                    // مدة بالسنوات
+                    document.getElementById('warrantyDuration').value = diffDays / 365;
+                    document.getElementById('warrantyUnit').value = 'years';
+                } else if (diffDays > 0 && diffDays % 30 === 0) {
+                    // مدة بالشهور
+                    document.getElementById('warrantyDuration').value = diffDays / 30;
+                    document.getElementById('warrantyUnit').value = 'months';
+                } else {
+                    // مدة بالأيام
+                    document.getElementById('warrantyDuration').value = diffDays > 0 ? diffDays : 1;
+                    document.getElementById('warrantyUnit').value = 'days';
+                }
+            }
+        });
+
+        // Preview image before upload
+        document.getElementById('image').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    capturedImages.push(e.target.result);
+                    updateImagesGrid();
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            // Clear the input to allow selecting the same files again
+            this.value = '';
+        });
+
+        // Check if warranty is expired
+        function isWarrantyExpired(warrantyDate) {
+            return new Date() > new Date(warrantyDate);
+        }
+
+        // Calculate remaining warranty time
+        function getRemainingWarranty(warrantyDate) {
+            const today = new Date();
+            const endDate = new Date(warrantyDate);
+            const diffTime = endDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 0) {
+                return {
+                    expired: true,
+                    remaining: Math.abs(diffDays),
+                    text: 'منتهي منذ'
+                };
+            }
+            
+            const years = Math.floor(diffDays / 365);
+            const months = Math.floor((diffDays % 365) / 30);
+            const days = diffDays % 30;
+            
+            let text = '';
+            if (years > 0) {
+                text += `${years} سنة `;
+            }
+            if (months > 0) {
+                text += `${months} شهر `;
+            }
+            if (days > 0 || (years === 0 && months === 0)) {
+                text += `${days} يوم`;
+            }
+            
+            return {
+                expired: false,
+                remaining: diffDays,
+                text: text.trim()
+            };
+        }
+
+        // Get warranty status class
+        function getWarrantyStatusClass(remainingDays, warrantyDuration, warrantyUnit) {
+            let totalDays;
+            if (warrantyUnit === 'years') {
+                totalDays = warrantyDuration * 365;
+            } else if (warrantyUnit === 'months') {
+                totalDays = warrantyDuration * 30;
+            } else {
+                totalDays = warrantyDuration;
+            }
+
+            const percentage = (remainingDays / totalDays) * 100;
+            
+            if (remainingDays <= 0) return '';
+            if (percentage > 50) return 'high';
+            if (percentage > 20) return 'medium';
+            return 'low';
+        }
+
+        let stream = null;
+        let imageCapture = null;
+        let capturedImages = [];
+
+        function updateImagesGrid() {
+            const grid = document.getElementById('imagesGrid');
+            grid.innerHTML = capturedImages.map((image, index) => `
+                <div class="image-container">
+                    <img src="${image}" alt="صورة الفاتورة ${index + 1}">
+                    <button class="delete-image" onclick="deleteImage(${index})">×</button>
+                </div>
+            `).join('') + `
+                <div class="add-image" onclick="document.getElementById('image').click()">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                    </svg>
+                    <span>إضافة صور</span>
+                </div>
+            `;
+        }
+
+        function deleteImage(index) {
+            capturedImages.splice(index, 1);
+            updateImagesGrid();
+        }
+
+        async function startCamera() {
+            try {
+                if (stream) {
+                    stopCamera();
+                    return;
+                }
+
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' },
+                    audio: false
+                });
+
+                const video = document.getElementById('cameraPreview');
+                video.srcObject = stream;
+                video.style.display = 'block';
+                document.getElementById('captureButton').style.display = 'block';
+                document.querySelector('.camera-button:last-child').textContent = 'إغلاق الكاميرا';
+
+                const track = stream.getVideoTracks()[0];
+                imageCapture = new ImageCapture(track);
+            } catch (error) {
+                console.error('خطأ في تشغيل الكاميرا:', error);
+                alert('لا يمكن الوصول إلى الكاميرا. الرجاء التأكد من السماح باستخدام الكاميرا.');
+            }
+        }
+
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+                imageCapture = null;
+                document.getElementById('cameraPreview').style.display = 'none';
+                document.getElementById('captureButton').style.display = 'none';
+                document.querySelector('.camera-button:last-child').textContent = 'استخدام الكاميرا';
+            }
+        }
+
+        async function captureImage() {
+            try {
+                const blob = await imageCapture.takePhoto();
+                const imageUrl = URL.createObjectURL(blob);
+                
+                // Convert blob to base64
+                const reader = new FileReader();
+                reader.onloadend = function() {
+                    capturedImages.push(reader.result);
+                    updateImagesGrid();
+                };
+                reader.readAsDataURL(blob);
+                
+                stopCamera();
+            } catch (error) {
+                console.error('خطأ في التقاط الصورة:', error);
+                alert('حدث خطأ أثناء التقاط الصورة. حاول مرة أخرى.');
+            }
+        }
+
+        document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const form = document.getElementById('invoiceForm');
+            const duration = parseInt(form.warrantyDuration.value);
+            const unit = form.warrantyUnit.value;
+            
+            // Convert duration to months for consistent storage
+            const warrantyMonths = unit === 'years' ? duration * 12 : (unit === 'months' ? duration : duration / 30);
+            
+            const invoice = {
+                date: form.date.value,
+                supplier: form.supplier.value,
+                items: form.items.value,
+                amount: parseFloat(form.amount.value),
+                warrantyDuration: duration,
+                warrantyUnit: unit,
+                warrantyDate: form.warrantyDate.value,
+                warrantyMonths: warrantyMonths,
+                images: capturedImages,
+                isHidden: false
+            };
+
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            invoices.unshift(invoice);
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            
+            form.reset();
+            capturedImages = [];
+            updateImagesGrid();
+            displayInvoices();
+        });
+
+        function toggleInvoice(index) {
+            let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            invoices[index].isHidden = !invoices[index].isHidden;
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            displayInvoices();
+        }
+
+        function displayInvoices() {
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            const invoicesList = document.getElementById('invoicesList');
+            invoicesList.innerHTML = '';
+            
+            let total = 0;
+
+            invoices.forEach((invoice, index) => {
+                const invoiceElement = document.createElement('div');
+                invoiceElement.className = 'invoice-item';
+                
+                let imagesHtml = '';
+                if (invoice.images && invoice.images.length > 0) {
+                    imagesHtml = `
+                        <div class="images-grid" style="display: ${invoice.isHidden ? 'none' : 'grid'}">
+                            ${invoice.images.map((image, i) => `
+                                <div class="image-container">
+                                    <img src="${image}" alt="صورة الفاتورة ${i + 1}" class="invoice-image" 
+                                         onclick="openLightbox('${JSON.stringify(invoice.images).replace(/'/g, "\\'")}', ${i})">
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                const detailsStyle = invoice.isHidden ? 'display: none;' : '';
+                const toggleText = invoice.isHidden ? 'إظهار' : 'إخفاء';
+                
+                const warrantyRemaining = getRemainingWarranty(invoice.warrantyDate);
+                const statusClass = getWarrantyStatusClass(warrantyRemaining.remaining, invoice.warrantyDuration, invoice.warrantyUnit);
+                
+                const warrantyStatus = warrantyRemaining.expired ? 
+                    `<span class="warranty-expired">الضمان ${warrantyRemaining.text} ${warrantyRemaining.remaining} يوم</span>` : 
+                    `<span class="warranty-remaining ${statusClass}">متبقي ${warrantyRemaining.text}</span>`;
+
+                const invoiceNumber = invoices.length - index;
+
+                invoiceElement.innerHTML = `
+                    <div class="invoice-header">
+                        <div style="display: flex; align-items: center;">
+                            <span class="invoice-number">فاتورة رقم ${invoiceNumber}</span>
+                            <strong>${invoice.supplier} - ${invoice.date}</strong>
+                            <button class="edit-button" onclick="showEditor(${index})" title="تعديل الفاتورة">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="button-group">
+                            ${warrantyStatus}
+                            <button class="hide-button" onclick="toggleInvoice(${index})">${toggleText}</button>
+                            <button onclick="deleteInvoice(${index})">حذف</button>
+                        </div>
+                    </div>
+                    <div class="invoice-details" style="${detailsStyle}">
+                        <p><strong>تاريخ الشراء:</strong> ${invoice.date}</p>
+                        <p><strong>المورد:</strong> ${invoice.supplier}</p>
+                        ${invoice.items ? `<p><strong>التفاصيل:</strong> ${invoice.items}</p>` : ''}
+                        <p><strong>المبلغ:</strong> ${invoice.amount} ريال</p>
+                        <p><strong>مدة الضمان:</strong> ${invoice.warrantyDuration} ${invoice.warrantyUnit === 'years' ? 'سنة' : (invoice.warrantyUnit === 'months' ? 'شهر' : 'يوم')}</p>
+                        <p><strong>تاريخ انتهاء الضمان:</strong> ${invoice.warrantyDate}</p>
+                        <p><strong>المتبقي من الضمان:</strong> ${warrantyRemaining.text}</p>
+                        ${imagesHtml}
+                    </div>
+                `;
+                invoicesList.appendChild(invoiceElement);
+                total += invoice.amount;
+            });
+
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
+        }
+
+        function deleteInvoice(index) {
+            if (!confirm('هل أنت متأكد من حذف هذه الفاتورة؟')) {
+                return;
+            }
+            let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            invoices.splice(index, 1);
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            displayInvoices();
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function scrollToBottom() {
+            window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+        }
+
+        // Show/hide scroll buttons based on scroll position
+        window.addEventListener('scroll', function() {
+            const scrollButtons = document.querySelector('.scroll-buttons');
+            if (window.scrollY > 300) {
+                scrollButtons.style.opacity = '1';
+            } else {
+                scrollButtons.style.opacity = '0.5';
+            }
+        });
+
+        // Display invoices on page load
+        displayInvoices();
+
+        let currentEditIndex = -1;
+
+        function showEditor(index) {
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            const invoice = invoices[index];
+            currentEditIndex = index;
+
+            document.getElementById('editSupplier').value = invoice.supplier;
+            document.getElementById('editAmount').value = invoice.amount;
+            document.getElementById('editItems').value = invoice.items || '';
+            document.getElementById('editWarrantyDuration').value = invoice.warrantyDuration;
+            document.getElementById('editWarrantyUnit').value = invoice.warrantyUnit;
+
+            const editor = document.getElementById('floatingEditor');
+            editor.classList.add('active');
+
+            // Scroll the editor into view
+            const invoiceElement = document.querySelectorAll('.invoice-item')[index];
+            const rect = invoiceElement.getBoundingClientRect();
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (rect.top < 0 || rect.bottom > window.innerHeight) {
+                window.scrollTo({
+                    top: scrollTop + rect.top - 100,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function saveEdit() {
+            if (currentEditIndex === -1) return;
+
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            const invoice = invoices[currentEditIndex];
+
+            invoice.supplier = document.getElementById('editSupplier').value;
+            invoice.amount = parseFloat(document.getElementById('editAmount').value);
+            invoice.items = document.getElementById('editItems').value;
+            invoice.warrantyDuration = parseInt(document.getElementById('editWarrantyDuration').value);
+            invoice.warrantyUnit = document.getElementById('editWarrantyUnit').value;
+            invoice.warrantyMonths = invoice.warrantyUnit === 'years' ? 
+                invoice.warrantyDuration * 12 : (invoice.warrantyUnit === 'months' ? invoice.warrantyDuration : invoice.warrantyDuration / 30);
+
+            // Recalculate warranty date
+            const purchaseDate = new Date(invoice.date);
+            if (invoice.warrantyUnit === 'years') {
+                purchaseDate.setFullYear(purchaseDate.getFullYear() + invoice.warrantyDuration);
+            } else if (invoice.warrantyUnit === 'months') {
+                purchaseDate.setMonth(purchaseDate.getMonth() + invoice.warrantyDuration);
+            } else if (invoice.warrantyUnit === 'days') {
+                purchaseDate.setDate(purchaseDate.getDate() + invoice.warrantyDuration);
+            }
+            invoice.warrantyDate = purchaseDate.toISOString().split('T')[0];
+
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            displayInvoices();
+            cancelEdit();
+        }
+
+        function cancelEdit() {
+            currentEditIndex = -1;
+            document.getElementById('floatingEditor').classList.remove('active');
+        }
+
+        let currentLightboxImages = [];
+        let currentLightboxIndex = 0;
+
+        function openLightbox(imagesJson, startIndex) {
+            currentLightboxImages = JSON.parse(imagesJson);
+            currentLightboxIndex = startIndex;
+            updateLightboxImage();
+            document.getElementById('lightbox').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox(event) {
+            if (event) {
+                event.stopPropagation();
+            }
+            if (event && event.target !== event.currentTarget && 
+                !event.target.classList.contains('lightbox-close')) {
+                return;
+            }
+            document.getElementById('lightbox').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function updateLightboxImage() {
+            const lightboxImage = document.getElementById('lightboxImage');
+            const counter = document.getElementById('lightboxCounter');
+            
+            lightboxImage.src = currentLightboxImages[currentLightboxIndex];
+            counter.textContent = `${currentLightboxIndex + 1} / ${currentLightboxImages.length}`;
+
+            // Show/hide navigation buttons based on image count
+            const prevButton = document.querySelector('.lightbox-prev');
+            const nextButton = document.querySelector('.lightbox-next');
+            
+            prevButton.style.display = currentLightboxImages.length > 1 ? 'flex' : 'none';
+            nextButton.style.display = currentLightboxImages.length > 1 ? 'flex' : 'none';
+        }
+
+        function navigateImage(direction, event) {
+            event.stopPropagation();
+            currentLightboxIndex = (currentLightboxIndex + direction + currentLightboxImages.length) % currentLightboxImages.length;
+            updateLightboxImage();
+        }
+
+        function searchInvoices() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            const invoicesList = document.getElementById('invoicesList');
+            const noResults = document.getElementById('noResults');
+            
+            let hasResults = false;
+            let total = 0;
+            let count = 0;
+            invoicesList.innerHTML = '';
+            
+            invoices.forEach((invoice, index) => {
+                const searchableText = `
+                    ${invoice.supplier || ''}
+                    ${invoice.date || ''}
+                    ${invoice.items || ''}
+                    ${invoice.amount || ''}
+                    ${invoice.warrantyDuration || ''}
+                    ${invoice.warrantyUnit || ''}
+                    ${invoice.warrantyDate || ''}
+                `.toLowerCase();
+
+                if (searchTerm === '' || searchableText.includes(searchTerm)) {
+                    hasResults = true;
+                    const invoiceElement = document.createElement('div');
+                    invoiceElement.className = 'invoice-item';
+                    
+                    let imagesHtml = '';
+                    if (invoice.images && invoice.images.length > 0) {
+                        imagesHtml = `
+                            <div class="images-grid" style="display: ${invoice.isHidden ? 'none' : 'grid'}">
+                                ${invoice.images.map((image, i) => `
+                                    <div class="image-container">
+                                        <img src="${image}" alt="صورة الفاتورة ${i + 1}" class="invoice-image" 
+                                             onclick="openLightbox('${JSON.stringify(invoice.images).replace(/'/g, "\\'")}', ${i})">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        `;
+                    }
+
+                    const detailsStyle = invoice.isHidden ? 'display: none;' : '';
+                    const toggleText = invoice.isHidden ? 'إظهار' : 'إخفاء';
+                    
+                    const warrantyRemaining = getRemainingWarranty(invoice.warrantyDate);
+                    const statusClass = getWarrantyStatusClass(warrantyRemaining.remaining, invoice.warrantyDuration, invoice.warrantyUnit);
+                    
+                    const warrantyStatus = warrantyRemaining.expired ? 
+                        `<span class="warranty-expired">الضمان ${warrantyRemaining.text} ${warrantyRemaining.remaining} يوم</span>` : 
+                        `<span class="warranty-remaining ${statusClass}">متبقي ${warrantyRemaining.text}</span>`;
+
+                    const invoiceNumber = invoices.length - index;
+
+                    invoiceElement.innerHTML = `
+                        <div class="invoice-header">
+                            <div style="display: flex; align-items: center;">
+                                <span class="invoice-number">فاتورة رقم ${invoiceNumber}</span>
+                                <strong>${invoice.supplier} - ${invoice.date}</strong>
+                                <button class="edit-button" onclick="showEditor(${index})" title="تعديل الفاتورة">
+                                    <svg viewBox="0 0 24 24">
+                                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="button-group">
+                                ${warrantyStatus}
+                                <button class="hide-button" onclick="toggleInvoice(${index})">${toggleText}</button>
+                                <button onclick="deleteInvoice(${index})">حذف</button>
+                            </div>
+                        </div>
+                        <div class="invoice-details" style="${detailsStyle}">
+                            <p><strong>تاريخ الشراء:</strong> ${invoice.date}</p>
+                            <p><strong>المورد:</strong> ${invoice.supplier}</p>
+                            ${invoice.items ? `<p><strong>التفاصيل:</strong> ${invoice.items}</p>` : ''}
+                            <p><strong>المبلغ:</strong> ${invoice.amount} ريال</p>
+                            <p><strong>مدة الضمان:</strong> ${invoice.warrantyDuration} ${invoice.warrantyUnit === 'years' ? 'سنة' : (invoice.warrantyUnit === 'months' ? 'شهر' : 'يوم')}</p>
+                            <p><strong>تاريخ انتهاء الضمان:</strong> ${invoice.warrantyDate}</p>
+                            <p><strong>المتبقي من الضمان:</strong> ${warrantyRemaining.text}</p>
+                            ${imagesHtml}
+                        </div>
+                    `;
+                    
+                    invoicesList.appendChild(invoiceElement);
+                    total += Number(invoice.amount) || 0;
+                    count++;
+                }
+            });
+
+            noResults.style.display = hasResults ? 'none' : 'block';
+
+            const totalElement = document.getElementById('totalAmount');
+            if (totalElement) {
+                totalElement.textContent = total.toFixed(2);
+            }
+
+            const countElement = document.getElementById('invoicesCount');
+            if (countElement) {
+                countElement.textContent = count;
+            }
+        }
+
+        // Update displayInvoices to use searchInvoices
+        function displayInvoices() {
+            document.getElementById('searchInput').value = '';
+            searchInvoices();
+        }
+    </script>
+</body>
+</html>
