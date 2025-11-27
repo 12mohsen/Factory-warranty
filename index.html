@@ -163,6 +163,15 @@
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
+        @keyframes blink {
+            0%, 100% { box-shadow: 0 0 0 rgba(255, 193, 7, 0.0); border-color: #444; }
+            50% { box-shadow: 0 0 15px rgba(255, 193, 7, 0.8); border-color: #ffc107; }
+        }
+
+        .invoice-item.blink-warning {
+            animation: blink 1s ease-in-out 0s 4 forwards;
+        }
+
         .invoice-header {
             display: flex;
             justify-content: space-between;
@@ -1114,7 +1123,6 @@
 
             invoices.forEach((invoice, index) => {
                 const invoiceElement = document.createElement('div');
-                invoiceElement.className = 'invoice-item';
                 
                 let imagesHtml = '';
                 if (invoice.images && invoice.images.length > 0) {
@@ -1145,6 +1153,12 @@
                 const nearExpiryNotice = (!warrantyRemaining.expired && warrantyRemaining.remaining <= 30)
                     ? '<p style="color:#FFA500;font-weight:bold;">تنبيه: الضمان أوشك على الانتهاء.</p>'
                     : '';
+
+                const blinkClass = (!warrantyRemaining.expired && warrantyRemaining.remaining > 0 && warrantyRemaining.remaining <= 3)
+                    ? ' invoice-item blink-warning'
+                    : ' invoice-item';
+
+                invoiceElement.className = blinkClass.trim();
 
                 invoiceElement.innerHTML = `
                     <div class="invoice-header">
@@ -1346,7 +1360,6 @@
                 if (searchTerm === '' || searchableText.includes(searchTerm)) {
                     hasResults = true;
                     const invoiceElement = document.createElement('div');
-                    invoiceElement.className = 'invoice-item';
                     
                     let imagesHtml = '';
                     if (invoice.images && invoice.images.length > 0) {
@@ -1377,6 +1390,12 @@
                     const nearExpiryNotice = (!warrantyRemaining.expired && warrantyRemaining.remaining <= 30)
                         ? '<p style="color:#FFA500;font-weight:bold;">تنبيه: الضمان أوشك على الانتهاء.</p>'
                         : '';
+
+                    const blinkClass = (!warrantyRemaining.expired && warrantyRemaining.remaining > 0 && warrantyRemaining.remaining <= 3)
+                        ? ' invoice-item blink-warning'
+                        : ' invoice-item';
+
+                    invoiceElement.className = blinkClass.trim();
 
                     invoiceElement.innerHTML = `
                         <div class="invoice-header">
