@@ -300,7 +300,22 @@
             }
 
             .button-group {
-                flex-wrap: wrap;
+                flex-wrap: nowrap;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .button-group .warranty-remaining,
+            .button-group .warranty-expired {
+                display: block;
+                width: 100%;
+                text-align: center;
+                margin-right: 0;
+            }
+
+            .button-group button {
+                width: 100%;
             }
 
             .container {
