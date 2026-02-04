@@ -390,6 +390,11 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         .floating-editor .edit-form {
             display: flex;
             gap: 10px;
@@ -938,12 +943,60 @@
         document.getElementById('image').addEventListener('change', function(e) {
             const files = Array.from(e.target.files);
             
-            files.forEach(file => {
+            if (files.length === 0) return;
+            
+            // Show loading feedback
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: linear-gradient(45deg, #4CAF50, #45a049);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                z-index: 3000;
+                font-weight: bold;
+                animation: slideIn 0.3s ease;
+            `;
+            loadingDiv.textContent = `جاري معالجة ${files.length} صورة...`;
+            document.body.appendChild(loadingDiv);
+            
+            let processedCount = 0;
+            
+            files.forEach((file, index) => {
+                // Check file size (limit to 5MB per image)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert(`الصورة ${index + 1} كبيرة جداً. الحد الأقصى هو 5 ميجابايت.`);
+                    return;
+                }
+                
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     capturedImages.push(e.target.result);
-                    updateImagesGrid();
+                    processedCount++;
+                    
+                    if (processedCount === files.length) {
+                        updateImagesGrid();
+                        loadingDiv.textContent = `تمت إضافة ${processedCount} صورة بنجاح!`;
+                        
+                        setTimeout(() => {
+                            loadingDiv.remove();
+                        }, 2000);
+                    }
                 };
+                
+                reader.onerror = function() {
+                    console.error(`Error processing file ${file.name}`);
+                    alert(`حدث خطأ في معالجة الصورة ${file.name}`);
+                    processedCount++;
+                    
+                    if (processedCount === files.length) {
+                        loadingDiv.remove();
+                    }
+                };
+                
                 reader.readAsDataURL(file);
             });
             
@@ -1077,26 +1130,69 @@
 
         async function captureImage() {
             try {
+                // Show processing indicator
+                const captureButton = document.getElementById('captureButton');
+                const originalText = captureButton.innerHTML;
+                captureButton.innerHTML = '<div style="width: 20px; height: 20px; border: 2px solid white; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>';
+                captureButton.style.pointerEvents = 'none';
+                
                 const blob = await imageCapture.takePhoto();
-                const imageUrl = URL.createObjectURL(blob);
                 
                 // Convert blob to base64
                 const reader = new FileReader();
                 reader.onloadend = function() {
-                    capturedImages.push(reader.result);
-                    updateImagesGrid();
+                    if (reader.result) {
+                        capturedImages.push(reader.result);
+                        updateImagesGrid();
+                        
+                        // Show success feedback
+                        const successDiv = document.createElement('div');
+                        successDiv.style.cssText = `
+                            position: fixed;
+                            top: 20px;
+                            right: 20px;
+                            background: linear-gradient(45deg, #4CAF50, #45a049);
+                            color: white;
+                            padding: 10px 20px;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                            z-index: 3000;
+                            font-weight: bold;
+                            animation: slideIn 0.3s ease;
+                        `;
+                        successDiv.textContent = 'تم التقاط الصورة بنجاح!';
+                        document.body.appendChild(successDiv);
+                        
+                        setTimeout(() => {
+                            successDiv.remove();
+                        }, 2000);
+                    }
+                    stopCamera();
                 };
+                
+                reader.onerror = function() {
+                    console.error('Error converting image to base64');
+                    alert('حدث خطأ في معالجة الصورة. حاول مرة أخرى.');
+                    stopCamera();
+                };
+                
                 reader.readAsDataURL(blob);
                 
-                stopCamera();
             } catch (error) {
                 console.error('خطأ في التقاط الصورة:', error);
                 alert('حدث خطأ أثناء التقاط الصورة. حاول مرة أخرى.');
+                stopCamera();
             }
         }
 
         document.getElementById('invoiceForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            // Check if camera is currently processing an image
+            if (stream) {
+                alert('يرجى إغلاق الكاميرا أولاً قبل حفظ الفاتورة');
+                return;
+            }
             
             const form = document.getElementById('invoiceForm');
             const duration = parseInt(form.warrantyDuration.value);
@@ -1105,6 +1201,7 @@
             // Convert duration to months for consistent storage
             const warrantyMonths = unit === 'years' ? duration * 12 : (unit === 'months' ? duration : duration / 30);
             
+            // Create invoice with current captured images
             const invoice = {
                 date: form.date.value,
                 supplier: form.supplier.value,
@@ -1114,18 +1211,54 @@
                 warrantyUnit: unit,
                 warrantyDate: form.warrantyDate.value,
                 warrantyMonths: warrantyMonths,
-                images: capturedImages,
+                images: [...capturedImages], // Create a copy to ensure we have the current state
                 isHidden: false
             };
 
+            // Validate that we have at least some data
+            if (!invoice.date || !invoice.supplier || !invoice.amount) {
+                alert('يرجى ملء جميع الحقول المطلوبة');
+                return;
+            }
+
             const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
             invoices.unshift(invoice);
-            localStorage.setItem('invoices', JSON.stringify(invoices));
             
-            form.reset();
-            capturedImages = [];
-            updateImagesGrid();
-            displayInvoices();
+            try {
+                localStorage.setItem('invoices', JSON.stringify(invoices));
+                
+                // Only clear after successful save
+                form.reset();
+                capturedImages = [];
+                updateImagesGrid();
+                displayInvoices();
+                
+                // Show success message
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(45deg, #4CAF50, #45a049);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                    z-index: 3000;
+                    font-weight: bold;
+                    animation: slideIn 0.3s ease;
+                `;
+                successDiv.textContent = 'تم حفظ الفاتورة بنجاح!';
+                document.body.appendChild(successDiv);
+                
+                setTimeout(() => {
+                    successDiv.remove();
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error saving invoice:', error);
+                alert('حدث خطأ أثناء حفظ الفاتورة. قد تكون الصور كبيرة جداً. حاول تقليل عدد الصور.');
+            }
         });
 
         function toggleInvoice(index) {
