@@ -1180,7 +1180,17 @@
                 imageCapture = null;
                 document.getElementById('cameraPreview').style.display = 'none';
                 document.getElementById('captureButton').style.display = 'none';
-                document.querySelector('.camera-button:last-child').textContent = 'استخدام الكاميرا';
+                
+                // Reset capture button to its original state
+                const captureButton = document.getElementById('captureButton');
+                captureButton.innerHTML = '';
+                captureButton.style.pointerEvents = 'auto';
+                
+                // Reset main camera button text
+                const cameraButton = document.querySelector('.camera-button:last-child');
+                if (cameraButton) {
+                    cameraButton.textContent = 'استخدام الكاميرا';
+                }
             }
         }
 
@@ -1188,7 +1198,7 @@
             try {
                 // Show processing indicator
                 const captureButton = document.getElementById('captureButton');
-                const originalText = captureButton.innerHTML;
+                const originalContent = captureButton.innerHTML;
                 captureButton.innerHTML = '<div style="width: 20px; height: 20px; border: 2px solid white; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>';
                 captureButton.style.pointerEvents = 'none';
                 
@@ -1264,12 +1274,22 @@
                             }, 2000);
                         }
                     }
+                    
+                    // Reset capture button state BEFORE stopping camera
+                    captureButton.innerHTML = originalContent;
+                    captureButton.style.pointerEvents = 'auto';
+                    
                     stopCamera();
                 };
                 
                 reader.onerror = function() {
                     console.error('Error converting image to base64');
                     alert('حدث خطأ في معالجة الصورة. حاول مرة أخرى.');
+                    
+                    // Reset capture button state on error
+                    captureButton.innerHTML = originalContent;
+                    captureButton.style.pointerEvents = 'auto';
+                    
                     stopCamera();
                 };
                 
@@ -1278,6 +1298,14 @@
             } catch (error) {
                 console.error('خطأ في التقاط الصورة:', error);
                 alert('حدث خطأ أثناء التقاط الصورة. حاول مرة أخرى.');
+                
+                // Reset capture button state on error
+                const captureButton = document.getElementById('captureButton');
+                if (captureButton) {
+                    captureButton.innerHTML = '';
+                    captureButton.style.pointerEvents = 'auto';
+                }
+                
                 stopCamera();
             }
         }
