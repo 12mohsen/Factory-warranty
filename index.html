@@ -940,7 +940,7 @@
         });
 
         // Preview image before upload
-        document.getElementById('image').addEventListener('change', function(e) {
+        document.getElementById('image').addEventListener('change', async function(e) {
             const files = Array.from(e.target.files);
             
             if (files.length === 0) return;
@@ -964,41 +964,60 @@
             document.body.appendChild(loadingDiv);
             
             let processedCount = 0;
+            let totalSizeReduction = 0;
             
-            files.forEach((file, index) => {
-                // Check file size (limit to 5MB per image)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert(`الصورة ${index + 1} كبيرة جداً. الحد الأقصى هو 5 ميجابايت.`);
-                    return;
+            for (let index = 0; index < files.length; index++) {
+                const file = files[index];
+                
+                // Check file size (limit to 10MB per image)
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`الصورة ${index + 1} كبيرة جداً. الحد الأقصى هو 10 ميجابايت.`);
+                    processedCount++;
+                    continue;
                 }
                 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    capturedImages.push(e.target.result);
+                try {
+                    const base64Image = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                    
+                    // Show compression for this image
+                    loadingDiv.textContent = `جاري ضغط الصورة ${index + 1} من ${files.length}...`;
+                    
+                    // Compress the image
+                    const compressedImage = await compressImage(base64Image);
+                    
+                    // Calculate size reduction
+                    const originalSize = Math.round(base64Image.length * 0.75 / 1024); // KB
+                    const compressedSize = Math.round(compressedImage.length * 0.75 / 1024); // KB
+                    const reduction = Math.round(((originalSize - compressedSize) / originalSize) * 100);
+                    totalSizeReduction += reduction;
+                    
+                    capturedImages.push(compressedImage);
                     processedCount++;
                     
-                    if (processedCount === files.length) {
-                        updateImagesGrid();
-                        loadingDiv.textContent = `تمت إضافة ${processedCount} صورة بنجاح!`;
-                        
-                        setTimeout(() => {
-                            loadingDiv.remove();
-                        }, 2000);
-                    }
-                };
-                
-                reader.onerror = function() {
-                    console.error(`Error processing file ${file.name}`);
+                } catch (error) {
+                    console.error(`Error processing file ${file.name}:`, error);
                     alert(`حدث خطأ في معالجة الصورة ${file.name}`);
                     processedCount++;
-                    
-                    if (processedCount === files.length) {
-                        loadingDiv.remove();
-                    }
-                };
-                
-                reader.readAsDataURL(file);
-            });
+                }
+            }
+            
+            // Final update
+            updateImagesGrid();
+            
+            if (totalSizeReduction > 0) {
+                loadingDiv.textContent = `تمت إضافة ${processedCount} صورة (توفير ${Math.round(totalSizeReduction / files.length)}% في الحجم)!`;
+            } else {
+                loadingDiv.textContent = `تمت إضافة ${processedCount} صورة بنجاح!`;
+            }
+            
+            setTimeout(() => {
+                loadingDiv.remove();
+            }, 3000);
             
             // Clear the input to allow selecting the same files again
             this.value = '';
@@ -1068,6 +1087,43 @@
         let stream = null;
         let imageCapture = null;
         let capturedImages = [];
+
+        // Function to compress image
+        function compressImage(base64Image, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Calculate new dimensions
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Draw and compress image
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convert to compressed base64
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+                    resolve(compressedBase64);
+                };
+                img.src = base64Image;
+            });
+        }
 
         function updateImagesGrid() {
             const grid = document.getElementById('imagesGrid');
@@ -1140,32 +1196,73 @@
                 
                 // Convert blob to base64
                 const reader = new FileReader();
-                reader.onloadend = function() {
+                reader.onloadend = async function() {
                     if (reader.result) {
-                        capturedImages.push(reader.result);
-                        updateImagesGrid();
-                        
-                        // Show success feedback
-                        const successDiv = document.createElement('div');
-                        successDiv.style.cssText = `
-                            position: fixed;
-                            top: 20px;
-                            right: 20px;
-                            background: linear-gradient(45deg, #4CAF50, #45a049);
-                            color: white;
-                            padding: 10px 20px;
-                            border-radius: 8px;
-                            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-                            z-index: 3000;
-                            font-weight: bold;
-                            animation: slideIn 0.3s ease;
-                        `;
-                        successDiv.textContent = 'تم التقاط الصورة بنجاح!';
-                        document.body.appendChild(successDiv);
-                        
-                        setTimeout(() => {
-                            successDiv.remove();
-                        }, 2000);
+                        try {
+                            // Show compression message
+                            const compressingDiv = document.createElement('div');
+                            compressingDiv.style.cssText = `
+                                position: fixed;
+                                top: 20px;
+                                right: 20px;
+                                background: linear-gradient(45deg, #FFA500, #FF8C00);
+                                color: white;
+                                padding: 10px 20px;
+                                border-radius: 8px;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                                z-index: 3000;
+                                font-weight: bold;
+                                animation: slideIn 0.3s ease;
+                            `;
+                            compressingDiv.textContent = 'جاري ضغط الصورة...';
+                            document.body.appendChild(compressingDiv);
+                            
+                            // Compress the image
+                            const compressedImage = await compressImage(reader.result);
+                            
+                            // Calculate size reduction
+                            const originalSize = Math.round(reader.result.length * 0.75 / 1024); // KB
+                            const compressedSize = Math.round(compressedImage.length * 0.75 / 1024); // KB
+                            const reduction = Math.round(((originalSize - compressedSize) / originalSize) * 100);
+                            
+                            capturedImages.push(compressedImage);
+                            updateImagesGrid();
+                            
+                            // Show success feedback with size info
+                            compressingDiv.textContent = `تم ضغط الصورة (${reduction}% توفير في الحجم)!`;
+                            compressingDiv.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+                            
+                            setTimeout(() => {
+                                compressingDiv.remove();
+                            }, 3000);
+                            
+                        } catch (compressError) {
+                            console.error('Error compressing image:', compressError);
+                            // If compression fails, use original image
+                            capturedImages.push(reader.result);
+                            updateImagesGrid();
+                            
+                            const successDiv = document.createElement('div');
+                            successDiv.style.cssText = `
+                                position: fixed;
+                                top: 20px;
+                                right: 20px;
+                                background: linear-gradient(45deg, #4CAF50, #45a049);
+                                color: white;
+                                padding: 10px 20px;
+                                border-radius: 8px;
+                                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                                z-index: 3000;
+                                font-weight: bold;
+                                animation: slideIn 0.3s ease;
+                            `;
+                            successDiv.textContent = 'تم التقاط الصورة بنجاح!';
+                            document.body.appendChild(successDiv);
+                            
+                            setTimeout(() => {
+                                successDiv.remove();
+                            }, 2000);
+                        }
                     }
                     stopCamera();
                 };
@@ -1225,6 +1322,85 @@
             invoices.unshift(invoice);
             
             try {
+                // Calculate estimated storage size before saving
+                const invoiceData = JSON.stringify(invoices);
+                const estimatedSize = new Blob([invoiceData]).size;
+                
+                // Check if we're approaching localStorage limit (typically 5-10MB)
+                const storageLimit = 5 * 1024 * 1024; // 5MB conservative estimate
+                const currentUsage = new Blob([JSON.stringify(localStorage)]).size;
+                
+                if (currentUsage + estimatedSize > storageLimit) {
+                    // Offer to clean up old invoices
+                    const shouldCleanup = confirm(
+                        'مساحة التخزين شبه ممتلئة. هل تريد حذف الفواتير القديمة جداً (أكبر من سنتين) لتحرير المساحة؟\n\n' +
+                        'إذا اخترت "لا"، يمكنك حذف بعض الفواتير يدوياً من القائمة.'
+                    );
+                    
+                    if (shouldCleanup) {
+                        cleanupOldInvoices();
+                        // Try saving again after cleanup
+                        setTimeout(() => saveInvoice(invoice, form), 500);
+                        return;
+                    } else {
+                        alert('يرجى حذف بعض الفواتير القديمة يدوياً لتوفير مساحة للتخزين.');
+                        return;
+                    }
+                }
+                
+                localStorage.setItem('invoices', invoiceData);
+                
+                // Only clear after successful save
+                form.reset();
+                capturedImages = [];
+                updateImagesGrid();
+                displayInvoices();
+                
+                // Show success message
+                const successDiv = document.createElement('div');
+                successDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(45deg, #4CAF50, #45a049);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                    z-index: 3000;
+                    font-weight: bold;
+                    animation: slideIn 0.3s ease;
+                `;
+                successDiv.textContent = 'تم حفظ الفاتورة بنجاح!';
+                document.body.appendChild(successDiv);
+                
+                setTimeout(() => {
+                    successDiv.remove();
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error saving invoice:', error);
+                
+                if (error.name === 'QuotaExceededError' || error.code === 22) {
+                    alert(
+                        'مساحة التخزين ممتلئة بالكامل!\n\n' +
+                        'الحلول المقترحة:\n' +
+                        '1. حذف بعض الفواتير القديمة\n' +
+                        '2. استخدام صور أصغر حجماً\n' +
+                        '3. تقليل عدد الصور في كل فاتورة'
+                    );
+                } else {
+                    alert('حدث خطأ أثناء حفظ الفاتورة: ' + error.message);
+                }
+            }
+        });
+
+        // Function to save invoice (extracted for reuse)
+        function saveInvoice(invoice, form) {
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            invoices.unshift(invoice);
+            
+            try {
                 localStorage.setItem('invoices', JSON.stringify(invoices));
                 
                 // Only clear after successful save
@@ -1257,9 +1433,50 @@
                 
             } catch (error) {
                 console.error('Error saving invoice:', error);
-                alert('حدث خطأ أثناء حفظ الفاتورة. قد تكون الصور كبيرة جداً. حاول تقليل عدد الصور.');
+                alert('حدث خطأ أثناء حفظ الفاتورة: ' + error.message);
             }
-        });
+        }
+
+        // Function to cleanup old invoices (older than 2 years)
+        function cleanupOldInvoices() {
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            const twoYearsAgo = new Date();
+            twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+            
+            const filteredInvoices = invoices.filter(invoice => {
+                const invoiceDate = new Date(invoice.date);
+                return invoiceDate > twoYearsAgo;
+            });
+            
+            const deletedCount = invoices.length - filteredInvoices.length;
+            
+            if (deletedCount > 0) {
+                localStorage.setItem('invoices', JSON.stringify(filteredInvoices));
+                
+                const cleanupDiv = document.createElement('div');
+                cleanupDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: linear-gradient(45deg, #FFA500, #FF8C00);
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                    z-index: 3000;
+                    font-weight: bold;
+                    animation: slideIn 0.3s ease;
+                `;
+                cleanupDiv.textContent = `تم حذف ${deletedCount} فاتورة قديمة لتحرير المساحة!`;
+                document.body.appendChild(cleanupDiv);
+                
+                setTimeout(() => {
+                    cleanupDiv.remove();
+                }, 3000);
+                
+                displayInvoices();
+            }
+        }
 
         function toggleInvoice(index) {
             let invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
